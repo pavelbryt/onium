@@ -118,6 +118,7 @@
 					:key="key"
 					:id="key"
 					:type="type"
+					ref="hexes"
 					@click.native.prevent="$emit('move', [r, q])"
 					@contextmenu.native.prevent="$emit('move', [r, q], true)"
 				></hex>
@@ -147,7 +148,8 @@
 			:class="{ hex: true }"
 			:key="id"
 			:data-type="type"
-			:transform="transform"
+			:x="x"
+			:y="y"
 		></use>
 	</script>
 </head>

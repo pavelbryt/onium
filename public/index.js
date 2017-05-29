@@ -270,6 +270,7 @@ Vue.component('grid', {
 	data() {
 		return {
 			gridTransform: null,
+			viewBox: '0 0 20 20',
 		};
 	},
 
@@ -286,43 +287,20 @@ Vue.component('grid', {
 	},
 
 	computed: {
-		// transform() {
-		// 	console.log('transform');
-		// 	let minX, maxX, minY, maxY;
-		// 	minX = minY = Infinity;
-		// 	maxX = maxY = -Infinity;
+		// viewBox() {
+		// 	let { hexes } = this.$refs;
 
-		// 	let { grid } = this;
+		// 	if (!hexes) return null;
 
-		// 	for (let r in grid) {
-		// 		let row = grid[r];
-		// 		r = +r;
-		// 		minY = Math.min(minY, r);
-		// 		maxY = Math.max(maxY, r);
-		// 		for (let q in row) {
-		// 			q = +q;
-		// 			let x = q + r / 2;
-		// 			maxX = Math.max(maxX, q + r / 2);
-		// 		}
+		// 	let maxX = 0, maxY = 0;
+
+		// 	for (let { x, y } of hexes) {
+		// 		maxX = Math.max(x, maxX);
+		// 		maxY = Math.max(y, maxY);
 		// 	}
 
-		// 	maxX = (maxX + .5) * HEXAGON_WIDTH;
-		// 	maxY = (maxY + .5) * HEXAGON_HEIGHT;
-		// 	let scale = 1 / Math.max(maxX, maxY);
-		// 	if (!Number.isFinite(scale)) scale = 1;
-		// 	return `scale(${scale})`;
+		// 	return `0 0 ${maxX} ${maxY}`;
 		// },
-
-		hexagonPoints() {
-			return [
-				0, -HEXAGON_HALF_HEIGHT,
-				-HEXAGON_HALF_WIDTH, -HEXAGON_QUARTER_HEIGHT,
-				-HEXAGON_HALF_WIDTH, HEXAGON_QUARTER_HEIGHT,
-				0, HEXAGON_HALF_HEIGHT,
-				HEXAGON_HALF_WIDTH, HEXAGON_QUARTER_HEIGHT,
-				HEXAGON_HALF_WIDTH, -HEXAGON_QUARTER_HEIGHT,
-			].join(',');
-		},
 
 		flatGrid() {
 			let { grid } = this;
@@ -343,6 +321,17 @@ Vue.component('grid', {
 			return flatGrid;
 		},
 
+		hexagonPoints() {
+			return [
+				0, -HEXAGON_HALF_HEIGHT,
+				-HEXAGON_HALF_WIDTH, -HEXAGON_QUARTER_HEIGHT,
+				-HEXAGON_HALF_WIDTH, HEXAGON_QUARTER_HEIGHT,
+				0, HEXAGON_HALF_HEIGHT,
+				HEXAGON_HALF_WIDTH, HEXAGON_QUARTER_HEIGHT,
+				HEXAGON_HALF_WIDTH, -HEXAGON_QUARTER_HEIGHT,
+			].join(',');
+		},
+
 		test() {
 			return [1, 2, 3];
 		}
@@ -353,6 +342,7 @@ Vue.component('grid', {
 			// immediate: true,
 			handler(_, old) {
 				if (old) return;
+				console.log(this.$refs.hexes);
 				this.updateGridTransform();
 			},
 		},
@@ -413,6 +403,22 @@ Vue.component('hex', {
 			};
 		},
 	},
+
+	mounted() {
+		let el = this.$el;
+
+		el.getBoundingClientRect = function() {
+			console.log('getBoundingClientRect');
+			let bBox = el.getBBox();
+
+			return {
+				left: bBox.x,
+				top: bBox.y,
+				width: bBox.width,
+				height: bBox.height,
+			};
+		}
+	}
 });
 
 
