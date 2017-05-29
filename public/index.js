@@ -11,24 +11,6 @@ const HEXAGON_HALF_WIDTH = HEXAGON_WIDTH / 2;
 
 const HEXAGON_QUARTER_HEIGHT = HEXAGON_HEIGHT / 4;
 
-const PREVIOUS_NEIGHBORS_OFFSETS = [
-	[ 0, -1],
-	[-1,  0],
-	[-1, +1],
-];
-
-const NEXT_NEIGHBORS_OFFSETS = [
-	[ 0, +1],
-	[+1,  0],
-	[+1, -1],
-];
-
-const NEIGHBORS_OFFSETS = [].concat(
-	PREVIOUS_NEIGHBORS_OFFSETS,
-	NEXT_NEIGHBORS_OFFSETS,
-);
-
-
 
 Vue.component('modal', {
 	template: '#template-modal',
