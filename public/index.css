@@ -81,6 +81,11 @@ body {
 }
 
 
+.hex-move {
+	transition: 1s;
+}
+
+
 .hex.clickable {
 	cursor: pointer;
 }

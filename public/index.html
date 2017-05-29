@@ -66,7 +66,11 @@
 
 	<script type="text/x-template" id="template-game">
 		<div class="game">
-			<grid :grid="grid"></grid>
+			<grid
+				:grid="grid"
+				ref="grid"
+				@move="emitMove"
+			></grid>
 			<section class="lobby">
 				<ul>
 					<li v-for="n in maxPlayers">
@@ -97,24 +101,42 @@
 
 
 	<script type="text/x-template" id="template-grid">
-		<svg class="grid" viewBox="0 0 1 1">
+		<svg ref="svg" class="grid" viewBox="0 0 1 1">
 			<defs v-once>
 				<polygon id="hexagon" :points="hexagonPoints"></polygon>
 			</defs>
-			<g ref="g" :transform="gridTransform">
-				<g v-for="(row, r) in grid">
-					<hex
-						v-for="(hex, q) in row"
-						ref="hexes"
-						:r="hex.r"
-						:q="hex.q"
-						:id="hex.key"
-						:type="hex.type"
-						:grid="grid"
-						@move="move"
-					></hex>
-				</g>
-			</g>
+			<transition-group
+				name="hex"
+				tag="g"
+				ref="group"
+				:transform="gridTransform"
+			>
+				<hex
+					v-for="{ r, q, key, type } in flatGrid"
+					:r="r"
+					:q="q"
+					:key="key"
+					:id="key"
+					:type="type"
+					@click.native.prevent="$emit('move', [r, q])"
+					@contextmenu.native.prevent="$emit('move', [r, q], true)"
+				></hex>
+			</transition-group>
+				<!-- <g ref="g" :transform="gridTransform">
+					<g v-for="(row, r) in grid" v-if="row">
+						<hex
+							v-for="(hex, q) in row"
+							v-if="hex"
+							ref="hexes"
+							:r="r"
+							:q="q"
+							:id="hex.key"
+							:type="hex.type"
+							@click.native.prevent="$emit('move', [r, q])"
+							@contextmenu.native.prevent="$emit('move', [r, q], true)"
+						></hex>
+					</g>
+				</g> -->
 		</svg>
 	</script>
 
@@ -122,13 +144,10 @@
 	<script type="text/x-template" id="template-hex">
 		<use
 			xlink:href="#hexagon"
-			:class="{ hex: true, clickable }"
+			:class="{ hex: true }"
 			:key="id"
 			:data-type="type"
-			:x="x"
-			:y="y"
-			@click.prevent="move(1)"
-			@contextmenu.prevent="move(-1)"
+			:transform="transform"
 		></use>
 	</script>
 </head>

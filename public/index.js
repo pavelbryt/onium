@@ -121,35 +121,121 @@ Vue.component('game', {
 			secondsPerMove: null,
 			started: null,
 			socket: null,
+			turn: 0,
 		};
 	},
 
 	methods: {
+		initSocket(socket) {
+				// socket
+				// 	.on('error', console.error)
+				// 	.on('disconnect', () => console.log('disconnect'))
+				// 	.on('game:init', this.init)
+				// 	.on('game:playerjoin', (player) => this.players.push(player))
+				// 	.on('game:playerleave', (index) => this.players.splice(index, 1))
+				// 	.on('game:join', (index) => this.player = this.players[index])
+				// 	.on('game:start', this.onStart)
+				// 	.on('game:message', this.insertMessage)
+				// 	.on('invalid', console.warn);
+			socket
+				.on('error', console.error)
+				.on('gameerror', console.error)
+				.on('init', this.init)
+				.on('playerjoin', (player) => this.players.push(player))
+				.on('playerleave', (i) => this.players.splice(i, 1))
+				.on('join', (i) => this.player = this.players[i])
+				.on('message', this.insertMessage)
+				.on('shuffle', this.shuffle)
+				.on('start', () => this.started = true)
+				.on('turn', (i) => this.turn = i)
+				.on('move', this.rotate)
+				.on('clear', this.clear)
+				.on('fill', this.fill)
+				.on('points', (i, pts) => this.players[i].points = pts)
+				.on('end', this.end);
+		},
+
 		init(data) {
 			for (let key in data) this[key] = data[key];
 		},
 
 		join() {
-			this.socket.emit('game:join', { name: this.playerName });
-		},
-
-		leave() {
-			this.socket.emit('game:leave');
-			this.player = null;
-		},
-
-		start() {
-			this.socket.emit('game:start');
+			this.socket.emit('join', this.playerName);
 		},
 
 		insertMessage(name, message)  {
 			this.chat = this.chat.slice(-127).concat({ name, message });
 		},
 
+		start() {
+			this.socket.emit('start');
+		},
+
+		shuffle(positions) {
+			let { players } = this;
+			this.players = players.map((_, i) => players[positions[i]]);
+		},
+
 		sendMessage() {
 			if (!this.currentMessage) return;
 			this.socket.emit('game:message', this.currentMessage);
 			this.currentMessage = '';
+		},
+
+		hexAt([r, q]) {
+			let { grid } = this;
+			return grid[r] && grid[r][q];
+		},
+
+		setHex([r, q], hex) {
+			let { grid } = this;
+			this.$set(grid[r] || this.$set(grid, r, Array(q+1)), q, hex);
+			// (grid[r] || (grid[r] = Array(q+1)))[q] = hex;
+		},
+
+		prevNeighborsCoordsOf([r, q]) {
+			return [
+				[r  , q-1],
+				[r-1, q  ],
+				[r-1, q+1],
+			].filter(this.hexAt);
+		},
+
+		nextNeighborsCoordsOf([r, q]) {
+			return [
+				[r  , q+1],
+				[r+1, q  ],
+				[r+1, q-1],
+			].filter(this.hexAt);
+		},
+
+		neighborsCoordsOf(coords) {
+			return this.prevNeighborsCoordsOf(coords)
+				.concat(this.nextNeighborsCoordsOf(coords));
+		},
+
+		rotate(coords, reverse = false) {
+			console.log(arguments);
+			let neighborsCoords = this.neighborsCoordsOf(coords);
+			if (reverse) neighborsCoords.reverse();
+			let neighbors = neighborsCoords.map(this.hexAt);
+
+			for (let i = 0; i < 6; i++) {
+				this.setHex(neighborsCoords[i], neighbors[i+1]);
+			}
+
+			this.setHex(neighborsCoords[5], neighbors[0]);
+		},
+
+		clear(coordsArray) {
+			let { grid } = this;
+			for (let [r, q] of coordsArray) this[r, q] = null;
+		},
+
+		emitMove(coords, reverse) {
+			if (!this.canMove) return;
+			if (this.neighborsCoordsOf(coords).length != 6) return;
+			this.socket.emit('move', coords, reverse);
 		},
 	},
 
@@ -159,7 +245,11 @@ Vue.component('game', {
 		},
 
 		host() {
-			return this.player == this.players[0];
+			return !this.started && this.player == this.players[0];
+		},
+
+		canMove() {
+			return this.started && this.player == this.players[this.turn];
 		},
 	},
 
@@ -177,17 +267,7 @@ Vue.component('game', {
 				console.log(socket, oldSocket);
 				if (oldSocket) oldSocket.close();
 				if (!socket) return;
-
-				socket
-					.on('error', console.error)
-					.on('disconnect', () => console.log('disconnect'))
-					.on('game:init', this.init)
-					.on('game:playerjoin', (player) => this.players.push(player))
-					.on('game:playerleave', (index) => this.players.splice(index, 1))
-					.on('game:join', (index) => this.player = this.players[index])
-					.on('game:start', () => this.started = true)
-					.on('game:message', this.insertMessage)
-					.on('invalid', console.warn);
+				this.initSocket(socket);
 			},
 		},
 	},
@@ -195,121 +275,6 @@ Vue.component('game', {
 	beforeDestroy() {
 		let { socket } = this;
 		if (socket) socket.close();
-	},
-});
-
-
-
-Vue.component('hex', {
-	template: '#template-hex',
-
-	props: ['r', 'q', 'id', 'type', 'grid'],
-
-	computed: {
-		x() {
-			this.log();
-			return HEXAGON_WIDTH * this.q + HEXAGON_HALF_WIDTH * this.r;
-		},
-
-		y() {
-			return HEXAGON_QUARTER_HEIGHT * 3 * this.r;
-		},
-
-		clickable() {
-			return this.neighbors.length == 6;
-		},
-
-		prevNeighbors() {
-			let { r, q, grid } = this;
-			let neighbors = [];
-
-			for (let [dr, dq] of PREVIOUS_NEIGHBORS_OFFSETS) {
-				let neighbor = this.getHex(r+dr, q+dq);
-				neighbor && neighbors.push(neighbor);
-			}
-
-			return neighbors;
-		},
-
-		nextNeighbors() {
-			let { r, q, grid } = this;
-			let neighbors = [];
-
-			for (let [dr, dq] of NEXT_NEIGHBORS_OFFSETS) {
-				let neighbor = this.getHex(r+dr, q+dq);
-				neighbor && neighbors.push(neighbor);
-			}
-
-			return neighbors;
-		},
-
-		neighbors() {
-			return this.prevNeighbors.concat(this.nextNeighbors);
-		},
-
-		transform() {
-			return `translate(${this.x},${this.y})`;
-		}
-	},
-
-	methods: {
-		getHex(r, q) {
-			let { grid } = this;
-			return grid[r] && grid[r][q];
-		},
-
-		move(direction) {
-			console.log(this.neighbors);
-			this.rotate();
-			// this.$emit('move', this.r, this.q, direction);
-		},
-
-		swap(a, b = this.hexData) {
-			let { grid } = this;
-			let { r: ar, q: aq } = a;
-			let { r: br, q: bq } = b;
-
-			a.r = br;
-			a.q = bq;
-			grid[br][bq] = a;
-
-			b.r = ar;
-			b.q = aq;
-			grid[ar][aq] = b;
-		},
-
-		rotate() {
-			let { grid, neighbors } = this;
-			if (neighbors.length != 6) return;
-
-			console.log(neighbors.map(({ r, q }) => `${r},${q}`));
-
-			let { r: r0, q: q0 } = neighbors[0];
-
-			for (let i = 1; i < 6; i++) {
-				let current = neighbors[i];
-				let prev = neighbors[i-1];
-				let { r, q } = current;
-				prev.r = r;
-				prev.q = q;
-				grid[r][q] = prev;
-			}
-
-			let last = neighbors[5];
-			last.r = r0;
-			last.q = q0;
-			grid[r0][q0] = last;
-
-			console.log(neighbors.map(({ r, q }) => `${r},${q}`));
-		},
-
-		log() {
-			console.log('!');
-		},
-	},
-
-	created() {
-		// this.grid[this.r][this.q] = this;
 	},
 });
 
@@ -327,63 +292,15 @@ Vue.component('grid', {
 	},
 
 	methods: {
-		isIndex(n) {
-			// console.log('isIndex', arguments);
-			return n != null && Number.isSafeInteger(+n);
-		},
-
-		hexagonX(r, q) {
-			// console.log('hexagonX');
-			return HEXAGON_WIDTH * q + HEXAGON_HALF_WIDTH * r;
-		},
-
-		hexagonY(r) {
-			// console.log('hexagonY');
-			return HEXAGON_QUARTER_HEIGHT * 3 * r;
-		},
-
 		async updateGridTransform() {
 			await this.$nextTick();
-			let bBox = this.$refs.g.getBBox();
+			let bBox = this.$refs.svg.getBBox();
 			let scale = 1 / Math.max(bBox.width, bBox.height);
 			let translateX = -bBox.x * scale;
 			let translateY = -bBox.y * scale;
 			let matrix = [scale, 0, 0, scale, translateX, translateY];
 			this.gridTransform = `matrix(${matrix.join(',')})`;
 		},
-
-		move(r, q, direction) {
-			let { grid } = this;
-			let mem = grid[r-1][q];
-
-			let offsets = [
-				[-1,  0],
-				[-1,  1],
-				[ 0,  1],
-				[ 1,  0],
-				[ 1, -1],
-				[ 0, -1],
-			];
-
-			offsets.reduce((prev, [offsetR, offsetQ]) => {
-
-			});
-
-			grid[r-1][q] = grid[r-1][q+1];
-			grid[r-1][q+1] = grid[r][q+1];
-			grid[r][q+1] = grid[r+1][q];
-			grid[r+1][q] = grid[r+1][q-1];
-			grid[r+1][q-1] = grid[r][q-1];
-			grid[r][q-1] = mem;
-
-			return this.emit('move', { r, q, direction });
-		},
-
-		log: console.log.bind(console),
-
-		createGame() {
-			this.socket.emit('create-game')
-		}
 	},
 
 	computed: {
@@ -424,12 +341,36 @@ Vue.component('grid', {
 				HEXAGON_HALF_WIDTH, -HEXAGON_QUARTER_HEIGHT,
 			].join(',');
 		},
+
+		flatGrid() {
+			let { grid } = this;
+			let flatGrid = [];
+
+			if (!grid) return grid;
+
+			for (let r = 0; r < grid.length; r++) {
+				let row = grid[r];
+				if (!row) continue;
+				for (let q = 0; q < row.length; q++) {
+					let hex = row[q];
+					if (!hex) continue;
+					flatGrid.push(Object.assign({ r, q }, hex));
+				}
+			}
+
+			return flatGrid;
+		},
+
+		test() {
+			return [1, 2, 3];
+		}
 	},
 
 	watch: {
 		grid: {
 			// immediate: true,
-			handler() {
+			handler(_, old) {
+				if (old) return;
 				this.updateGridTransform();
 			},
 		},
@@ -461,6 +402,34 @@ Vue.component('grid', {
 
 		// this.grid = grid;
 		// this.updateGridTransform();
+	},
+});
+
+
+
+Vue.component('hex', {
+	template: '#template-hex',
+
+	props: ['r', 'q', 'id', 'type'],
+
+	computed: {
+		x() {
+			return HEXAGON_WIDTH * this.q + HEXAGON_HALF_WIDTH * this.r;
+		},
+
+		y() {
+			return HEXAGON_QUARTER_HEIGHT * 3 * this.r;
+		},
+
+		transform() {
+			return `translate(${this.x},${this.y})`;
+		},
+
+		style() {
+			return {
+				transform: `translate(${this.x}px,${this.y}px)`,
+			};
+		},
 	},
 });
 
