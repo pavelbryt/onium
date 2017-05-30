@@ -303,6 +303,7 @@ Vue.component('grid', {
 		// },
 
 		flatGrid() {
+			console.log('flatGrid');
 			let { grid } = this;
 			let flatGrid = [];
 
@@ -318,7 +319,7 @@ Vue.component('grid', {
 				}
 			}
 
-			return flatGrid;
+			return flatGrid.sort((a, b) => a.key - b.key);
 		},
 
 		hexagonPoints() {
@@ -403,22 +404,6 @@ Vue.component('hex', {
 			};
 		},
 	},
-
-	mounted() {
-		let el = this.$el;
-
-		el.getBoundingClientRect = function() {
-			console.log('getBoundingClientRect');
-			let bBox = el.getBBox();
-
-			return {
-				left: bBox.x,
-				top: bBox.y,
-				width: bBox.width,
-				height: bBox.height,
-			};
-		}
-	}
 });
 
 

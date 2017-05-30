@@ -78,7 +78,7 @@ body {
 .hex {
 	stroke: #000;
 	stroke-width: 0.0625;
-	/*transition: 1s;*/
+	transition: 1s;
 }
 
 

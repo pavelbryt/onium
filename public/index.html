@@ -105,7 +105,7 @@
 			<defs v-once>
 				<polygon id="hexagon" :points="hexagonPoints"></polygon>
 			</defs>
-			<transition-group
+			<g
 				name="hex"
 				tag="g"
 				ref="group"
@@ -122,7 +122,7 @@
 					@click.native.prevent="$emit('move', [r, q])"
 					@contextmenu.native.prevent="$emit('move', [r, q], true)"
 				></hex>
-			</transition-group>
+			</g>
 				<!-- <g ref="g" :transform="gridTransform">
 					<g v-for="(row, r) in grid" v-if="row">
 						<hex
@@ -148,8 +148,7 @@
 			:class="{ hex: true }"
 			:key="id"
 			:data-type="type"
-			:x="x"
-			:y="y"
+			:style="style"
 		></use>
 	</script>
 </head>
