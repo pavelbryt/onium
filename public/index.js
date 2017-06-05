@@ -440,22 +440,18 @@ Vue.component('lobby', {
 			this.$emit('message', input);
 			this.input = '';
 		},
+
+		updateScroll() {
+			let { chatMessages } = this.$refs;
+			chatMessages.scrollTop = chatMessages.scrollHeight;
+		}
 	},
 
-	// mounted() {
-	// 	let animate = () => {
-	// 		// console.log('frame');
-	// 		this.animationRequest = window.requestAnimationFrame(animate);
-	// 		// this.remaining = this.formatRemainingTime();
-	// 		this.$forceUpdate();
-	// 	};
-
-	// 	animate();
-	// },
-
-	// beforeDestroy() {
-	// 	window.cancelAnimationFrame(this.animationRequest);
-	// },
+	watch: {
+		chat() {
+			this.$nextTick(this.updateScroll);
+		},
+	},
 });
 
 

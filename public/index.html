@@ -194,7 +194,7 @@
 				>Leave</button>
 			</div>
 			<div class="chat">
-				<ul class="chat-messages">
+				<ul class="chat-messages" ref="chatMessages">
 					<li class="chat-message" v-for="{ name, color, message } in chat">
 						<b v-text="name" :class="`color-${color}`"></b>:
 						<span v-text="message"></span>
@@ -204,7 +204,7 @@
 					<input
 						class="chat-input"
 						type="text"
-						v-model.lazy.trim="input"
+						v-model.trim="input"
 						placeholder="Message"
 					>
 					<input type="submit" value="Send">
