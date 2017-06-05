@@ -3,6 +3,38 @@ body {
 	height: 100vh;
 	width: 100vw;
 	overflow: hidden;
+	color: #FFF;
+	background-color: #222;
+	font-family: sans-serif;
+}
+
+
+input, button {
+	border: solid .125em rgba(66, 220, 219, .8);
+	border-radius: .25em;
+	background: rgba(66, 220, 219, .2);
+	color: #FFF;
+	font-size: 1em;
+	padding: .25em;
+}
+
+
+button, input[type="submit"] {
+	cursor: pointer;
+}
+
+
+::-webkit-input-placeholder { color:#AAA; }
+::-moz-placeholder          { color:#AAA; }
+:-ms-input-placeholder      { color:#AAA; }
+
+
+.backlight {
+	text-shadow:
+		rgba(66, 220, 219, .8) -.125em -.125em .5em,
+		rgba(66, 220, 219, .8) -.125em  .125em .5em,
+		rgba(66, 220, 219, .8)  .125em -.125em .5em,
+		rgba(66, 220, 219, .8)  .125em  .125em .5em;
 }
 
 
@@ -10,47 +42,32 @@ body {
 	display: flex;
 	height: 100%;
 	width: 100%;
-	flex-direction: column;
-}
-
-
-.game {
-	display: flex;
-	flex-grow: 1;
-	min-height: 0;
-	/*flex-grow: 1;*/
-}
-
-
-.grid {
-	/*max-height: 100%;*/
-	/*max-width: 100%;*/
-	flex-grow: 1;
+	flex-flow: column;
 }
 
 
 .modal-wrapper {
 	display: flex;
+	flex-flow: column;
 	justify-content: space-around;
 	align-items: center;
-	flex-direction: column;
 	position: fixed;
-	background-color: rgba(0, 0, 0, .5);
 	width: 100%;
 	height: 100%;
 	top: 0;
 	left: 0;
-	cursor: pointer;
+	background-color: rgba(0, 0, 0, .5);
+	/*cursor: pointer;*/
 }
 
 
 .modal {
 	display: flex;
-	flex-direction: column;
+	flex-flow: column;
 	align-items: center;
-	background-color: #FFF;
-	cursor: initial;
 	padding: 1em;
+	background-color: #222;
+	cursor: initial;
 }
 
 
@@ -64,26 +81,104 @@ body {
 }
 
 
+.header {
+	display: flex;
+	justify-content: flex-end;
+}
+
+
+.header-link {
+	/*height: 2em;*/
+	font-size: 1.5em;
+	cursor: pointer;
+	border-bottom: solid rgba(66, 220, 219, .8) .0625em;
+	margin: 0 2em;
+}
+
+
+.game {
+	display: flex;
+	/*flex-flow: wrap;*/
+	flex: 1;
+	min-height: 0;
+}
+
+
+.grid {
+	flex: 1 24em;
+	padding: 1em;
+}
+
+
 .lobby {
 	display: flex;
-	flex-direction: column;
+	flex-flow: column;
+	flex: 0 2 24em;
+	align-self: center;
+	height: 75%;
+	padding: 1em;
+}
+
+
+.rounds {
+	text-align: center;
+	font-size: 2em;
+}
+
+
+.timer {
+	text-align: center;
+	font-family: monospace;
+	font-size: 2em;
+}
+
+
+.players {
+	font-size: 1.25em;
+	list-style: circle;
+}
+
+
+.active-player {
+	list-style: disc;
+}
+
+
+.main-button > * {
+	width: 100%;
 }
 
 
 .chat {
+	display: flex;
+	flex-flow: column;
+	flex: 1;
+}
+
+
+.chat-messages {
+	flex: 1;
+	padding: 0;
+	list-style: none;
 	overflow-y: auto;
+}
+
+
+.chat-form {
+	display: flex;
+}
+
+
+.chat-input {
+	flex: 1;
+	margin-right: .5em;
 }
 
 
 .hex {
 	stroke: #000;
 	stroke-width: 0.0625;
-	transition: 1s;
-}
-
-
-.hex-move {
-	transition: 1s;
+	transition: .5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 
@@ -92,9 +187,63 @@ body {
 }
 
 
+/*
+.color-0 { animation: rainbow .5s linear infinite; }
+.color-1 { color: hsl(  7.88, 100%, 66.6666%); fill: hsl(  7.88, 100%, 66.6666%); }
+.color-2 { color: hsl( 59.31, 100%, 66.6666%); fill: hsl( 59.31, 100%, 66.6666%); }
+.color-3 { color: hsl(110.74, 100%, 66.6666%); fill: hsl(110.74, 100%, 66.6666%); }
+.color-4 { color: hsl(162.17, 100%, 66.6666%); fill: hsl(162.17, 100%, 66.6666%); }
+.color-5 { color: hsl(213.60, 100%, 66.6666%); fill: hsl(213.60, 100%, 66.6666%); }
+.color-6 { color: hsl(265.03, 100%, 66.6666%); fill: hsl(265.03, 100%, 66.6666%); }
+.color-7 { color: hsl(316.46, 100%, 66.6666%); fill: hsl(316.46, 100%, 66.6666%); }
+
+
+@keyframes rainbow {
+	  0.00% { color: hsl(  7.88, 100%, 66.6666%); fill: hsl(  7.88, 100%, 66.6666%); }
+	 14.29% { color: hsl( 59.31, 100%, 66.6666%); fill: hsl( 59.31, 100%, 66.6666%); }
+	 28.57% { color: hsl(110.74, 100%, 66.6666%); fill: hsl(110.74, 100%, 66.6666%); }
+	 42.86% { color: hsl(162.17, 100%, 66.6666%); fill: hsl(162.17, 100%, 66.6666%); }
+	 57.14% { color: hsl(213.60, 100%, 66.6666%); fill: hsl(213.60, 100%, 66.6666%); }
+	 71.43% { color: hsl(265.03, 100%, 66.6666%); fill: hsl(265.03, 100%, 66.6666%); }
+	 85.71% { color: hsl(316.46, 100%, 66.6666%); fill: hsl(316.46, 100%, 66.6666%); }
+	100.00% { color: hsl(  7.88, 100%, 66.6666%); fill: hsl(  7.88, 100%, 66.6666%); }
+}*/
+
+
+.color-0 { animation: rainbow .5s linear infinite; }
+.color-1 { color: hsl( 46, 100%, 66.67%); fill: hsl( 46, 100%, 66.67%); }
+.color-2 { color: hsl(106, 100%, 66.67%); fill: hsl(106, 100%, 66.67%); }
+.color-3 { color: hsl(166, 100%, 66.67%); fill: hsl(166, 100%, 66.67%); }
+.color-4 { color: hsl(226, 100%, 66.67%); fill: hsl(226, 100%, 66.67%); }
+.color-5 { color: hsl(286, 100%, 66.67%); fill: hsl(286, 100%, 66.67%); }
+.color-6 { color: hsl(346, 100%, 66.67%); fill: hsl(346, 100%, 66.67%); }
+
+
+@keyframes rainbow {
+	  0.00% { color: hsl( 46, 100%, 66.67%); fill: hsl( 46, 100%, 66.67%); }
+	 16.67% { color: hsl(106, 100%, 66.67%); fill: hsl(106, 100%, 66.67%); }
+	 33.33% { color: hsl(166, 100%, 66.67%); fill: hsl(166, 100%, 66.67%); }
+	 50.00% { color: hsl(226, 100%, 66.67%); fill: hsl(226, 100%, 66.67%); }
+	 66.67% { color: hsl(286, 100%, 66.67%); fill: hsl(286, 100%, 66.67%); }
+	 83.33% { color: hsl(346, 100%, 66.67%); fill: hsl(346, 100%, 66.67%); }
+	100.00% { color: hsl( 46, 100%, 66.67%); fill: hsl( 46, 100%, 66.67%); }
+}
+
+/*
 .hex[data-type="0"] { fill: hsl( 46, 100%, 66.6666%); }
 .hex[data-type="1"] { fill: hsl(106, 100%, 66.6666%); }
 .hex[data-type="2"] { fill: hsl(166, 100%, 66.6666%); }
 .hex[data-type="3"] { fill: hsl(226, 100%, 66.6666%); }
 .hex[data-type="4"] { fill: hsl(286, 100%, 66.6666%); }
-.hex[data-type="5"] { fill: hsl(346, 100%, 66.6666%); }
+.hex[data-type="5"] { fill: hsl(346, 100%, 66.6666%); }*/
+
+
+/*.hex[data-type="0"] { animation: rainbow .5s linear infinite; }*/
+/*.hex[data-type="1"] { fill: hsl(  7.88, 100%, 66.6666%); }*/
+/*.hex[data-type="2"] { fill: hsl( 59.31, 100%, 66.6666%); }*/
+/*.hex[data-type="3"] { fill: hsl(110.74, 100%, 66.6666%); }*/
+/*.hex[data-type="4"] { fill: hsl(162.17, 100%, 66.6666%); }*/
+/*.hex[data-type="5"] { fill: hsl(213.60, 100%, 66.6666%); }*/
+/*.hex[data-type="6"] { fill: hsl(265.03, 100%, 66.6666%); }*/
+/*.hex[data-type="7"] { fill: hsl(316.46, 100%, 66.6666%); }*/
+

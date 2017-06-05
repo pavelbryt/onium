@@ -20,23 +20,23 @@
 	<script type="text/x-template" id="template-create-game">
 		<modal @submit="submit" @close="$emit('close')">
 			<label class="end">
-				Moves per player: {{ movesPerPlayer }}
-				<input type="range" min="4" max="100" v-model.number="movesPerPlayer">
+				Rounds: <b>{{ roundsTotal }}</b>
+				<input type="range" min="4" max="100" v-model.number="roundsTotal">
 			</label>
 
 			<label class="end">
-				Seconds per move: {{ secondsPerMove }}
-				<input type="range" min="2" max="60" v-model.number="secondsPerMove">
+				Seconds per move: <b>{{ perMoveSeconds }}</b>
+				<input type="range" min="2" max="100" v-model.number="perMoveSeconds">
 			</label>
 
 			<label class="end">
-				Max players: {{ maxPlayers }}
-				<input type="range" min="1" max="8" v-model.number="maxPlayers">
+				Max players: <b>{{ maxPlayers }}</b>
+				<input type="range" min="1" max="6" v-model.number="maxPlayers">
 			</label>
 
 			<label>
 				<input type="checkbox" v-model="isPrivate">
-				Private
+				Private game
 			</label>
 
 			<input type="submit" value="Create">
@@ -46,7 +46,7 @@
 
 	<script type="text/x-template" id="template-change-name">
 		<modal
-			@submit="name && ($emit('namechange', name), $emit('close'))"
+			@submit="input && ($emit('namechange', input), $emit('close'))"
 			@close="$emit('close')"
 		>
 			<label>
@@ -56,7 +56,7 @@
 					selectionStart="0"
 					selectionEnd="3"
 					ref="input"
-					v-model.lazy.trim="name"
+					v-model.lazy.trim="input"
 				>
 			</label>
 			<input type="submit" value="Apply">
@@ -67,11 +67,11 @@
 	<script type="text/x-template" id="template-game">
 		<div class="game">
 			<grid
-				:grid="grid"
 				ref="grid"
-				@move="emitMove"
+				:grid="grid"
+				@move="move"
 			></grid>
-			<section class="lobby">
+<!-- 			<section class="lobby">
 				<ul>
 					<li v-for="n in maxPlayers">
 						{{ n }}. {{
@@ -95,121 +95,166 @@
 						<input type="submit" value="Send">
 					</form>
 				</div>
-			</section>
+			</section> -->
+			<lobby
+				:stage="stage"
+				:round="round"
+				:roundsTotal="roundsTotal"
+				:turnRemainingTime="turnRemainingTime"
+				:turnStartTime="turnStartTime"
+				:maxPlayers="maxPlayers"
+				:players="players"
+				:thisPlayer="thisPlayer"
+				:turn="turn"
+				:chat="chat"
+				@join="join"
+				@leave="leave"
+				@start="start"
+				@message="sendMessage"
+			></lobby>
 		</div>
 	</script>
 
 
 	<script type="text/x-template" id="template-grid">
-		<svg ref="svg" class="grid" viewBox="0 0 1 1">
+		<svg ref="svg" class="grid" :viewBox="viewBox">	
 			<defs v-once>
 				<polygon id="hexagon" :points="hexagonPoints"></polygon>
 			</defs>
-			<g
-				name="hex"
-				tag="g"
-				ref="group"
-				:transform="gridTransform"
-			>
+			<g :key="grid">
 				<hex
-					v-for="{ r, q, key, type } in flatGrid"
-					:r="r"
-					:q="q"
-					:key="key"
-					:id="key"
-					:type="type"
+					v-for="(hex, i) in grid"
+					v-show="hex.color > -2"
+					:hex="hex"
+					:key="i"
 					ref="hexes"
-					@click.native.prevent="$emit('move', [r, q])"
-					@contextmenu.native.prevent="$emit('move', [r, q], true)"
+					@click.native.prevent="$emit('move', hex.r, hex.q)"
+					@contextmenu.native.prevent="$emit('move', hex.r, hex.q, true)"
 				></hex>
 			</g>
-				<!-- <g ref="g" :transform="gridTransform">
-					<g v-for="(row, r) in grid" v-if="row">
-						<hex
-							v-for="(hex, q) in row"
-							v-if="hex"
-							ref="hexes"
-							:r="r"
-							:q="q"
-							:id="hex.key"
-							:type="hex.type"
-							@click.native.prevent="$emit('move', [r, q])"
-							@contextmenu.native.prevent="$emit('move', [r, q], true)"
-						></hex>
-					</g>
-				</g> -->
 		</svg>
 	</script>
 
 
 	<script type="text/x-template" id="template-hex">
-		<use
-			xlink:href="#hexagon"
-			:class="{ hex: true }"
-			:key="id"
-			:data-type="type"
-			:style="style"
-		></use>
+		<transition
+			@enter="scale = 0, opacity = 0"
+			@after-enter="scale = 1, opacity = 1"
+			@enter-cancelled="scale = 1, opacity = 1"
+			@before-leave="scale = 1, opacity = 1"
+			@leave="scale = 1.5, opacity = 0"
+			@leave-cancelled="scale = 1, opacity = 1"
+		>
+			<use
+				xlink:href="#hexagon"
+				:class="['hex', `color-${color}`]"
+				:style="style"
+			></use>
+		</transition>
+	</script>
+
+
+	<script type="text/x-template" id="template-lobby">
+		<div class="lobby">
+			<div class="rounds backlight">
+				{{ round }} / {{ roundsTotal }}
+			</div>
+			<!-- <div class="time" v-text="formatRemainingTime()"></div> -->
+			<timer
+				:startTime="turnStartTime"
+				:remainingTime="turnRemainingTime"
+			></timer>
+			<ul class="players">
+				<li
+					v-for="(player, i) in players"
+					:class="[
+						'player',
+						`color-${player.color}`,
+						{
+							'this-player': player == thisPlayer,
+							'active-player': player == players[turn],
+						},
+					]"
+				>
+					{{ player.name }} | {{ player.points }}
+				</li>
+			</ul>
+			<div class="main-button">
+				<button
+					v-if="stage == 0 && !thisPlayer && players.length < maxPlayers"
+					@click="$emit('join')"
+				>Join</button>
+				<button
+					v-else-if="stage == 0 && thisPlayer == players[0]"
+					@click="$emit('start')"
+				>Start</button>
+				<button
+					v-else-if="stage != 2 && thisPlayer"
+					@click="$emit('leave')"
+				>Leave</button>
+			</div>
+			<div class="chat">
+				<ul class="chat-messages">
+					<li class="chat-message" v-for="{ name, color, message } in chat">
+						<b v-text="name" :class="`color-${color}`"></b>:
+						<span v-text="message"></span>
+					</li>
+				</ul>
+				<form class="chat-form" @submit.prevent="sendMessage">
+					<input
+						class="chat-input"
+						type="text"
+						v-model.lazy.trim="input"
+						placeholder="Message"
+					>
+					<input type="submit" value="Send">
+				</form>
+			</div>
+		</div>
+	</script>
+
+
+	<script type="text/x-template" id="template-timer">
+		<div class="timer backlight">
+			{{ formatRemainingTime() }}
+		</div>
 	</script>
 </head>
 
 
 <body>
 	<main id="app">
-		<header>
-			<a href="#" @click.prevent="modal = 'create-game'">
+		<header class="header">
+			<a class="header-link backlight" @click.prevent="modal = 'create-game'">
 				Create a game
 			</a>
 
-			<a href="#" @click.prevent="modal = 'change-name'">
-				Your name: {{ playerName }}
+			<a class="header-link backlight" @click.prevent="quickGame">
+				Quick game
+			</a>
+
+			<a class="header-link backlight" @click.prevent="modal = 'change-name'">
+				{{ username }}
 			</a>
 		</header>
 
 		<component
 			:is="modal"
 			:socket="socket"
-			:prev-name.camel="playerName"
+			:name="username"
 			@gamecreate="gameId = $event"
-			@namechange="playerName = $event"
+			@namechange="username = $event"
 			@close="modal = null"
 		></component>
 
 		<game
 			v-if="gameId"
-			:id="gameId"
+			ref="game"
 			:key="gameId"
-			:player-name.camel="playerName"
+			:id="gameId"
+			:username="username"
+			@socketerror="$event == 'Invalid namespace' && quickGame()"
 		></game>
 	</main>
-
-
-	<!-- <svg id="onium" viewBox="0 0 1 1">
-		<defs v-once>
-			<polygon id="hexagon" :points="hexagonPoints"></polygon>
-		</defs>
-		<g ref="grid" :transform="gridTransform">
-			<g v-for="(row, r) in grid">
-				<onium-hex
-					v-for="(hex, q) in row"
-					inline-template
-					ref="hexes"
-					:hex-data.camel="hex"
-					@move="move"
-				>
-					<use
-						xlink:href="#hexagon"
-						:class="{ 'onium-hex': true, clickable }"
-						:key="key"
-						:data-type="type"
-						:x="x"
-						:y="y"
-						@click.prevent="move(1)"
-						@contextmenu.prevent="move(-1)"
-					/>
-				</onium-hex>
-			</g>
-		</g>
-	</svg> -->
 </body>
 </html>
