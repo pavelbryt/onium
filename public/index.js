@@ -329,12 +329,6 @@ Vue.component('grid', {
 				0, HEXAGON_HALF_HEIGHT,
 				HEXAGON_HALF_WIDTH, HEXAGON_QUARTER_HEIGHT,
 				HEXAGON_HALF_WIDTH, -HEXAGON_QUARTER_HEIGHT,
-				// HEXAGON_HALF_WIDTH, 0,
-				// HEXAGON_WIDTH, HEXAGON_QUARTER_HEIGHT,
-				// HEXAGON_WIDTH, 3 * HEXAGON_QUARTER_HEIGHT,
-				// HEXAGON_HALF_WIDTH, HEXAGON_HEIGHT,
-				// 0, 3 * HEXAGON_QUARTER_HEIGHT,
-				// 0, HEXAGON_QUARTER_HEIGHT,
 			].join(',');
 		},
 	},
@@ -548,6 +542,12 @@ let app = new Vue({
 		},
 	},
 
+	computed: {
+		fallbackUsername() {
+			return `player${Math.random() * 0x100000000 | 0}`;
+		},
+	},
+
 	watch: {
 		gameId(id) {
 			window.location.replace('#' + id);
@@ -572,10 +572,3 @@ let app = new Vue({
 		if (!this.gameId) this.quickGame();
 	},
 });
-
-
-
-
-
-
-

@@ -234,7 +234,7 @@
 			</a>
 
 			<a class="header-link backlight" @click.prevent="modal = 'change-name'">
-				{{ username }}
+				{{ username || fallbackUsername }}
 			</a>
 		</header>
 
@@ -252,7 +252,7 @@
 			ref="game"
 			:key="gameId"
 			:id="gameId"
-			:username="username"
+			:username="username || fallbackUsername"
 			@socketerror="$event == 'Invalid namespace' && quickGame()"
 		></game>
 	</main>
