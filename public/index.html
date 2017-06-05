@@ -21,7 +21,7 @@
 		<modal @submit="submit" @close="$emit('close')">
 			<label class="end">
 				Rounds: <b>{{ roundsTotal }}</b>
-				<input type="range" min="4" max="100" v-model.number="roundsTotal">
+				<input type="range" min="1" max="20" v-model.number="roundsTotal">
 			</label>
 
 			<label class="end">
@@ -71,31 +71,6 @@
 				:grid="grid"
 				@move="move"
 			></grid>
-<!-- 			<section class="lobby">
-				<ul>
-					<li v-for="n in maxPlayers">
-						{{ n }}. {{
-							players[n-1] ? (players[n-1].name + (players[n-1] == player ? ' (me)' : '')) : 'empty'
-						}}
-					</li>
-				</ul>
-				<button v-if="!started && !player" :disabled="full" @click="join">Join</button>
-				<button v-else-if="!started && host" @click="start">Start</button>
-				<p v-if="started">The game has started</p>
-				<div class="chat">
-					<p v-for="{ name, message } in chat">
-						<b>{{ name }}</b>: {{ message }}
-					</p>
-					<form v-if="player" @submit.prevent="sendMessage">
-						<input
-							type="text"
-							v-model.lazy.trim="currentMessage"
-							placeholder="message"
-						>
-						<input type="submit" value="Send">
-					</form>
-				</div>
-			</section> -->
 			<lobby
 				:stage="stage"
 				:round="round"
